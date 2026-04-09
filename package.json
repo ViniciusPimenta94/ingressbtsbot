@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js",
-    "postinstall": "npx playwright install chromium && npx playwright install-deps"
+    "start": "node bot.js"
   },
   "dependencies": {
     "axios": "^1.6.0",
