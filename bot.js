@@ -1,40 +1,66 @@
 const axios = require("axios");
 const { chromium } = require("playwright");
 
-const TOKEN = "8733969386:AAHs1L7j1YywkdlfV42p7335Q_rba81w-7k";
-const CHAT_ID = "332527910";
+const TOKEN = process.env.TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
 
 const URL = "https://www.ticketmaster.com.br/event/bts-world-tour-arirang";
 
+let jaNotificou = false;
+
 async function enviarMensagem(msg) {
-  await axios.post(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-    chat_id: CHAT_ID,
-    text: msg,
-  });
+  try {
+    await axios.post(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+      chat_id: CHAT_ID,
+      text: msg,
+    });
+  } catch (err) {
+    console.log("Erro ao enviar mensagem:", err.message);
+  }
 }
 
 (async () => {
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  try {
+    console.log("🚀 Iniciando bot...");
 
-  await page.goto(URL);
+    const browser = await chromium.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
 
-  console.log("Monitorando...");
+    const page = await browser.newPage();
 
-  setInterval(async () => {
-    try {
-      await page.reload();
+    await page.goto(URL, { waitUntil: "domcontentloaded" });
 
-      const conteudo = await page.content();
+    console.log("👀 Monitorando ingressos...");
 
-      if (!conteudo.includes("ESGOTADO")) {
-        console.log("🔥 DISPONÍVEL!");
-        await enviarMensagem("🚨 INGRESSO DISPONÍVEL! Corre!");
-      } else {
-        console.log("Ainda esgotado...");
+    setInterval(async () => {
+      try {
+        await page.reload({ waitUntil: "domcontentloaded" });
+
+        // Pega todos os textos dos botões
+        const botoes = await page.locator("button").allTextContents();
+
+        // Verifica se existe botão de compra
+        const temDisponivel = botoes.some(texto =>
+          texto.toLowerCase().includes("comprar") ||
+          texto.toLowerCase().includes("ingressos")
+        );
+
+        if (temDisponivel && !jaNotificou) {
+          console.log("🔥 INGRESSO DISPONÍVEL!");
+          await enviarMensagem("🚨 INGRESSO DISPONÍVEL! Corre comprar!");
+          jaNotificou = true;
+        } else {
+          console.log("Ainda esgotado...");
+        }
+
+      } catch (err) {
+        console.log("Erro no loop:", err.message);
       }
-    } catch (err) {
-      console.log("Erro:", err.message);
-    }
-  }, 15000);
+    }, 20000); // verifica a cada 20s
+
+  } catch (err) {
+    console.error("Erro geral:", err);
+  }
 })();
