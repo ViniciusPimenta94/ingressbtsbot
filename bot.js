@@ -59,6 +59,8 @@ function calcularDelayPara9h() {
   try {
     console.log("🚀 Iniciando bot...");
 
+    await enviarMensagem("✅ Bot reiniciado com sucesso!");
+
     const browser = await chromium.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"]
