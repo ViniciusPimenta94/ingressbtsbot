@@ -84,7 +84,7 @@ function calcularDelayPara9h() {
         const botoes = await page.locator("button").allTextContents();
 
         const temDisponivel = botoes.some(texto =>
-          texto.toLowerCase().includes("comprar ingressos")
+          texto.toLowerCase().includes("ingressos")
         );
 
         if (temDisponivel && !jaNotificou) {
